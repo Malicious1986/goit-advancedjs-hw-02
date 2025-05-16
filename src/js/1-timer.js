@@ -38,7 +38,7 @@ function onClose(selectedDates) {
   const currentTime = Date.now();
 
   if (currentTime >= selectedTime) {
-    iziToast.show(iziToastOptions);
+    return iziToast.show(iziToastOptions);
   }
   userSelectedDate = selectedTime - currentTime;
   setButtonState({ isDisabled: false });

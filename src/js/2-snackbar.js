@@ -8,14 +8,27 @@ const delay = document.querySelector('input[type=number]');
 
 let promiseType;
 let radioTarget;
+let parsedDelay;
 
-button.setAttribute('disabled', 'disabled');
+setButtonState();
+
+function setButtonState() {
+  if (parsedDelay && promiseType) {
+    button.removeAttribute('disabled');
+  } else {
+    button.setAttribute('disabled', 'disabled');
+  }
+}
+
+delay.addEventListener('input', e => {
+  parsedDelay = +e.target.value;
+  setButtonState();
+});
+
 form.addEventListener('submit', e => {
   e.preventDefault();
 
   try {
-    const parsedDelay = +delay.value;
-
     if (parsedDelay > 0) {
       button.setAttribute('disabled', 'disabled');
       radioTarget.checked = false;
@@ -29,20 +42,25 @@ form.addEventListener('submit', e => {
           }
         }, parsedDelay);
       });
-      promise.then(
-        () =>
-          iziToast.show({
-            message: `Fulfilled promise in ${parsedDelay}ms`,
-            color: 'green',
-            position: 'topCenter',
-          }),
-        () =>
-          iziToast.show({
-            message: `Rejected promise in ${parsedDelay}ms`,
-            color: 'red',
-            position: 'topCenter',
-          })
-      );
+      promise
+        .then(
+          () =>
+            iziToast.show({
+              message: `Fulfilled promise in ${parsedDelay}ms`,
+              color: 'green',
+              position: 'topCenter',
+            }),
+          () =>
+            iziToast.show({
+              message: `Rejected promise in ${parsedDelay}ms`,
+              color: 'red',
+              position: 'topCenter',
+            })
+        )
+        .finally(() => {
+          promiseType = null;
+          parsedDelay = 0;
+        });
     }
   } catch (error) {
     console.error(error);
@@ -52,5 +70,7 @@ form.addEventListener('submit', e => {
 fieldset.addEventListener('input', e => {
   radioTarget = e.target;
   promiseType = radioTarget.value;
-  button.removeAttribute('disabled');
+  if (parsedDelay > 0) {
+    button.removeAttribute('disabled');
+  }
 });
