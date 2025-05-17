@@ -3,74 +3,56 @@ import 'izitoast/dist/css/iziToast.min.css';
 
 const button = document.querySelector('button');
 const form = document.querySelector('form');
-const fieldset = document.querySelector('fieldset');
-const delay = document.querySelector('input[type=number]');
+const delayInput = document.querySelector('input[name=delay]');
+const radioInputs = document.querySelectorAll('input[name=state]');
 
-let promiseType;
-let radioTarget;
-let parsedDelay;
-
-setButtonState();
+let parsedDelay = null;
+let promiseType = null;
 
 function setButtonState() {
-  if (parsedDelay && promiseType) {
-    button.removeAttribute('disabled');
-  } else {
-    button.setAttribute('disabled', 'disabled');
-  }
+  button.disabled = !(parsedDelay > 0 && promiseType);
 }
 
-delay.addEventListener('input', e => {
-  parsedDelay = +e.target.value;
+delayInput.addEventListener('input', e => {
+  parsedDelay = Number(e.target.value);
   setButtonState();
+});
+
+radioInputs.forEach(input => {
+  input.addEventListener('change', e => {
+    promiseType = e.target.value;
+    setButtonState();
+  });
 });
 
 form.addEventListener('submit', e => {
   e.preventDefault();
 
-  try {
-    if (parsedDelay > 0) {
-      button.setAttribute('disabled', 'disabled');
-      radioTarget.checked = false;
-      delay.value = '';
-      const promise = new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (promiseType === 'fulfilled') {
-            resolve('fulfilled');
-          } else {
-            reject('rejected');
-          }
-        }, parsedDelay);
-      });
-      promise
-        .then(
-          () =>
-            iziToast.show({
-              message: `Fulfilled promise in ${parsedDelay}ms`,
-              color: 'green',
-              position: 'topCenter',
-            }),
-          () =>
-            iziToast.show({
-              message: `Rejected promise in ${parsedDelay}ms`,
-              color: 'red',
-              position: 'topCenter',
-            })
-        )
-        .finally(() => {
-          promiseType = null;
-          parsedDelay = 0;
-        });
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
+  button.disabled = true;
+  form.reset();
+  const delay = parsedDelay;
 
-fieldset.addEventListener('input', e => {
-  radioTarget = e.target;
-  promiseType = radioTarget.value;
-  if (parsedDelay > 0) {
-    button.removeAttribute('disabled');
-  }
+  new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (promiseType === 'fulfilled') {
+        resolve(delay);
+      } else {
+        reject(delay);
+      }
+    }, delay);
+  })
+    .then(delay => {
+      iziToast.show({
+        message: `✅ Fulfilled promise in ${delay}ms`,
+        color: 'green',
+        position: 'topCenter',
+      });
+    })
+    .catch(delay => {
+      iziToast.show({
+        message: `❌ Rejected promise in ${delay}ms`,
+        color: 'red',
+        position: 'topCenter',
+      });
+    });
 });
